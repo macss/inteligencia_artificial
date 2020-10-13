@@ -6,7 +6,6 @@ Created on Sat Sep 19 19:47:14 2020
 """
 
 # %%
-from __future__ import division, print_function
 import pandas as pd
 import skfuzzy as fuzz
 from sklearn.datasets import load_wine
@@ -15,8 +14,7 @@ import numpy as np
 
 #Carrega o wine dataset em wines
 wines = load_wine()
-m_base = [1.5, 2, 2.5, 3, 3.5, 4, 6, 8, 10]
-# m_base = [4]
+m_base = [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 6.0, 8.0, 10]
 
 # %%
 
@@ -25,39 +23,35 @@ dataset = pd.DataFrame(np.column_stack((wines.data, wines.target)),
 print(dataset)
 
 # %%
+#Define os parâmetros para o treinamento e teste
+test_size = 0.5
+ncenters = 4
+numero_de_testes = 100
 
-for i in m_base:
-    #Define os parâmetros para o treinamento e teste
-    ncenters = 3
-    m = i
-    numero_de_testes = 100
-    
+for m in m_base:
     #Inicializações
     acertos = 0
-    
-    #Dividindo o dataset em treinamento e checagem
-    wine_train, wine_test, label_train, label_test = train_test_split(
-        wines.data,wines.target,test_size=0.50,random_state=123)
-    
+
     #Loop para realizar o processo de treinamento e checagem X vezes
-    
     for _ in range(numero_de_testes):
-    
+        #Dividindo o dataset em treinamento e checagem
+        wine_train, wine_test, _, label_test = train_test_split(
+                                wines.data,wines.target,test_size=test_size)
+
         #Implementa o Algoritmo Fuzzy C-means
-        cntr, u, u0, d, jm, p, fpc = fuzz.cluster.cmeans(
-                wine_train.transpose(), ncenters, m, error=0.005, maxiter=1000, init=None)
-        cluster_membership = np.argmax(u, axis=0)
-    
+        cntr, _, _, _, _, _, _ = fuzz.cluster.cmeans(
+                wine_train.transpose(), ncenters, m, error=0.005, maxiter=10000, init=None)
+
         #A partir dos centros gerados testa o dataset
-        u, u0, d, jm, p, fpc = fuzz.cluster.cmeans_predict(
-                wine_test.transpose(), cntr, m, error=0.005, maxiter=1000)
+        u, _, _, _, _, _ = fuzz.cluster.cmeans_predict(
+                wine_test.transpose(), cntr, m, error=0.005, maxiter=10000)
         cluster_membership = np.argmax(u, axis=0)
-    
+
         #Confere com a label e conclui a quantidade de acertos real do Algorítmo
         for x in range(len(cluster_membership)):
             if cluster_membership[x] == label_test[x]:
                 acertos += 1
-    
+
     acertos /= len(cluster_membership) * numero_de_testes
     
-    print('acertos com m = ', str(i), ': ', acertos*100, '%')
+    print('Acertos com m = ', str(m), ': ', acertos*100, '%')
