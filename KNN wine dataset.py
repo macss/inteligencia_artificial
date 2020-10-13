@@ -50,4 +50,5 @@ for peso in pesos:
 
         acertos /= len(previsao) * numero_de_testes
 
-        print('Acertos com método de peso', peso, 'e', str(numero_de_vizinhos), 'vizinhos:', acertos*100, '%')
+        print('Acertos com método de peso', peso, 'e', str(numero_de_vizinhos),
+              'vizinhos:', acertos*100, '%')

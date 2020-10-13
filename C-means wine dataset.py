@@ -24,11 +24,12 @@ print(dataset)
 # %%
 #Define os parâmetros para o treinamento e teste
 test_size = 0.5
-ncenters = 4
+ncenters = 3
 numero_de_testes = 100
 
 #Inicializações
 acertos = 0
+iter_total = []
 
 #Loop para realização das simulações
 for _ in range(numero_de_testes):
@@ -39,6 +40,7 @@ for _ in range(numero_de_testes):
     #Implementa o Algoritmo Fuzzy C-means
     kmean_obj = skc.KMeans(n_clusters=ncenters, max_iter=10000)
     kmean_obj.fit(wine_train)
+    iter_total.append(kmean_obj.n_iter_)
 
     # #A partir dos centros gerados testa o dataset
     cluster_membership = kmean_obj.predict(wine_test)
@@ -50,4 +52,5 @@ for _ in range(numero_de_testes):
 
 acertos /= len(cluster_membership) * numero_de_testes
 
-print('Acertos:', acertos*100, '%')
+print('Acertos com', str(np.round(np.mean(iter_total),0)), 'iterações médias:',
+      acertos*100, '%')
