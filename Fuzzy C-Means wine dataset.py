@@ -24,14 +24,18 @@ print(dataset)
 # %%
 #Define os parâmetros para o treinamento e teste
 test_size = 0.5
-ncenters = 4
+ncenters = 5
 numero_de_testes = 100
 m_base = [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 6.0, 8.0, 10]
+
+#Inicialização dos resultados
+acertos_total = []
+iteracoes_total = []
 
 for m in m_base:
     #Inicializações
     acertos = 0
-    iter_total = []
+    iteracoes = []
 
     #Loop para realizar o processo de treinamento e checagem X vezes
     for _ in range(numero_de_testes):
@@ -40,9 +44,9 @@ for m in m_base:
                                 wines.data,wines.target,test_size=test_size)
 
         #Implementa o Algoritmo Fuzzy C-means
-        cntr, _, _, _, _, iterations, _ = fuzz.cluster.cmeans(
+        cntr, _, _, _, _, n_iter, _ = fuzz.cluster.cmeans(
                 wine_train.transpose(), ncenters, m, error=0.005, maxiter=10000, init=None)
-        iter_total.append(iterations)
+        iteracoes.append(n_iter)
 
         #A partir dos centros gerados testa o dataset
         u, _, _, _, _, _ = fuzz.cluster.cmeans_predict(
@@ -56,5 +60,8 @@ for m in m_base:
 
     acertos /= len(cluster_membership) * numero_de_testes
     
-    print('Acertos com m =', str(m), 'e', str(np.round(np.mean(iter_total),0)),
+    acertos_total.append(np.round(acertos,4))
+    iteracoes_total.append(np.round(np.mean(iteracoes),0))
+    
+    print('Acertos com m =', str(m), 'e', str(np.round(np.mean(iteracoes),0)),
           'iterações médias:', acertos*100, '%')

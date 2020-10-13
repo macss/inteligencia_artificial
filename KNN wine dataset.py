@@ -7,6 +7,7 @@ Created on Sat Sep 19 19:47:14 2020
 
 # %%
 import pandas as pd
+import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.datasets import load_wine
 from sklearn.model_selection import train_test_split
@@ -25,6 +26,9 @@ test_size = 0.5
 vizinhos = 10
 numero_de_testes = 100
 pesos = ['uniform', 'distance']
+
+#Inicialização dos resultados
+acertos_total = []
 
 for peso in pesos:
     for numero_de_vizinhos in range(1, vizinhos+1):
@@ -50,5 +54,6 @@ for peso in pesos:
 
         acertos /= len(previsao) * numero_de_testes
 
+        acertos_total.append(np.round(acertos,4))
         print('Acertos com método de peso', peso, 'e', str(numero_de_vizinhos),
               'vizinhos:', acertos*100, '%')

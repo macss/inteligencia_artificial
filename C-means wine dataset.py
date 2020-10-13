@@ -24,7 +24,7 @@ print(dataset)
 # %%
 #Define os parâmetros para o treinamento e teste
 test_size = 0.5
-ncenters = 3
+ncenters = 5
 numero_de_testes = 100
 
 #Inicializações
@@ -42,7 +42,7 @@ for _ in range(numero_de_testes):
     kmean_obj.fit(wine_train)
     iter_total.append(kmean_obj.n_iter_)
 
-    # #A partir dos centros gerados testa o dataset
+    #A partir dos centros gerados testa o dataset
     cluster_membership = kmean_obj.predict(wine_test)
 
     #Confere com a label e conclui a quantidade de acertos real do Algorítmo
