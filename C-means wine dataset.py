@@ -24,7 +24,7 @@ print(dataset)
 # %%
 #Define os parâmetros para o treinamento e teste
 test_size = 0.5
-ncenters = 3
+ncenters = 4
 numero_de_testes = 100
 
 #Inicializações
