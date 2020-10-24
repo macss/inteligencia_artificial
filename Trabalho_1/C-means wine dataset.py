@@ -52,5 +52,5 @@ for _ in range(numero_de_testes):
 
 acertos /= len(cluster_membership) * numero_de_testes
 
-print('Acertos com', str(np.round(np.mean(iter_total),0)), 'iterações médias:',
+print('Acertos com', str(int(np.round(np.mean(iter_total),0))), 'iterações médias:',
       acertos*100, '%')

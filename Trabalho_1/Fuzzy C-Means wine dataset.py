@@ -63,5 +63,5 @@ for m in m_base:
     acertos_total.append(np.round(acertos,4))
     iteracoes_total.append(np.round(np.mean(iteracoes),0))
     
-    print('Acertos com m =', str(m), 'e', str(np.round(np.mean(iteracoes),0)),
+    print('Acertos com m =', str(m), 'e', str(int(iteracoes_total[-1])),
           'iterações médias:', acertos*100, '%')
