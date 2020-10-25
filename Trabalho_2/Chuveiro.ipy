@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sun Oct 25 12:21:40 2020
-
-@author: Renard
-"""
 # %%
 #Pacotes utilizados
 import numpy as np
@@ -13,25 +8,31 @@ from matplotlib import pyplot as plt
 
 #Ranges
 temperaturas = np.arange(0, 45, 1)
-fluxos = np.arange(2,10, 0.1)
+fluxos = np.arange(3,7, 0.1)
 
 # %%
-#Fuzzificação
+#Regras de Fuzzificação
 t_ambiente = skc.Antecedent(temperaturas, 'temperatura_ambiente')
 fluxo_entrada = skc.Antecedent(fluxos, 'fluxo_entrada')
 potencia = skc.Consequent(np.arange(0,1, 1e-4), 'potencia_saida')
 
 niveis = ['Baixa', 'Media', 'Alta']
 t_ambiente.automf(names=niveis)
-fluxo_entrada.automf(names=niveis)
-potencia.automf(names=niveis)
+
+fluxo_entrada['Baixa'] = skf.trapmf(fluxo_entrada.universe, [3,3,4,6])
+fluxo_entrada['Media'] = skf.trapmf(fluxo_entrada.universe, [4,5,5,6])
+fluxo_entrada['Alta'] = skf.trapmf(fluxo_entrada.universe, [4,6,7,7])
+
+potencia['Baixa'] = skf.trimf(potencia.universe, [0,0,0.33])
+potencia['Media'] = skf.trimf(potencia.universe, [0.2,0.5,0.8])
+potencia['Alta'] = skf.trimf(potencia.universe, [0.66,1,1])
 
 t_ambiente.view()
 fluxo_entrada.view()
 potencia.view()
 
 # %%
-#Defuzzificação
+#Regras de Defuzzificação
 regra_1 = skc.Rule(t_ambiente['Baixa'] | fluxo_entrada['Alta'], potencia['Alta'])
 regra_2 = skc.Rule(t_ambiente['Media'] & fluxo_entrada['Media'], potencia['Media'])
 regra_3 = skc.Rule(t_ambiente['Alta'] | fluxo_entrada['Baixa'], potencia['Baixa'])
@@ -40,7 +41,7 @@ controle = skc.ControlSystem([regra_1, regra_2, regra_3])
 saida = skc.ControlSystemSimulation(controle)
 
 # %%
-#Criação de uma tabela de saída
+#Criação de uma tabela de saída (para implementar no controlador)
 potencia_saida = []
 temp_potencia = []
 for t in temperaturas:
@@ -53,3 +54,20 @@ for t in temperaturas:
     potencia_saida.append(temp_potencia)
     temp_potencia = []
 potencia_saida = np.vstack(potencia_saida)
+
+# %%
+#Plot de exemplos
+
+plt.figure()
+plt.plot(temperaturas,potencia_saida[:,10], label='Fluxo = $4l/m$')
+plt.plot(temperaturas,potencia_saida[:,20], label='Fluxo = $5l/m$')
+plt.plot(temperaturas,potencia_saida[:,30], label='Fluxo = $6l/m$')
+plt.legend(loc='best')
+plt.grid(True)
+
+plt.figure()
+plt.plot(fluxos,potencia_saida[5,:], label='Temperatura ambiente = $5$ \u00b0C')
+plt.plot(fluxos,potencia_saida[25,:], label='Temperatura ambiente = $25$ \u00b0C')
+plt.plot(fluxos,potencia_saida[35,:], label='Temperatura ambiente = $35$ \u00b0C')
+plt.legend(loc='best')
+plt.grid(True)

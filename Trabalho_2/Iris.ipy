@@ -1,0 +1,9 @@
+# -*- coding: utf-8 -*-
+# %%
+#Pacotes utilizados
+import numpy as np
+import skfuzzy as skf
+from skfuzzy import control as skc
+from matplotlib import pyplot as plt
+
+
