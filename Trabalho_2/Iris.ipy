@@ -2,8 +2,181 @@
 # %%
 #Pacotes utilizados
 import numpy as np
+import pandas as pd
 import skfuzzy as skf
+
 from skfuzzy import control as skc
+from sklearn import datasets as data
+from sklearn import model_selection as skms
 from matplotlib import pyplot as plt
+from beecolpy import abc
+
+#Carrega o dataset e separa em conjunto de treino e validação
+iris = data.load_iris()
+dataset = np.column_stack((iris.data, iris.target))
+dataset_columns = iris.feature_names + ['Group']
+
+iris_train, iris_validate, label_train, label_validate = skms.train_test_split(
+    iris.data, iris.target, test_size=0.5)
+
+# %%
+#Teste de correlação das características com os grupos
+covariance = []
+for i in range(len(iris_train[0])):
+    temp_cov = np.cov(iris_train[:,i], label_train)[0,1]/ \
+                        (np.std(iris_train[:,i]) * np.std(label_train))
+    covariance.append(temp_cov)
+print(pd.DataFrame([covariance], columns=iris.feature_names))
+
+#Conclui-se que a largura das sépalas não influencia na classificação, já que
+#sua covariância é menor ou igual a zero.
+#As demais características são relevantes pois possuem covariância normalizada
+#próximas de 1.
+
+# %%
+#Regras de fuzificação
+sepal_length = skc.Antecedent(np.arange(0.5, 10, 0.1), 'sepal_length')
+petal_length = skc.Antecedent(np.arange(0.5, 10, 0.1), 'petal_length')
+petal_width = skc.Antecedent(np.arange(0.1, 5.0, 0.1), 'petal_width')
+group = skc.Consequent(np.arange(0, 2, 1e-2), 'Group')
 
 
+def cost_function(x):
+    global iris_train, label_train
+    
+    if (x[0] <= x[1]):
+        print('Inf')
+        return np.nan
+    
+    for i in range(2,4):
+        if x[i-1] > x[i]:
+            print('Mid')
+            return np.nan
+        
+    if (x[3] <= x[4]):
+        print('Sup')
+        return np.nan
+        
+    sepal_length['Pequena'] = skf.trimf(sepal_length.universe, [0.5, 0.5, x[0]])   #<
+    sepal_length['Media'] = skf.trimf(sepal_length.universe, [x[1], x[2], x[3]])
+    sepal_length['Grande'] = skf.trimf(sepal_length.universe, [x[4], 10, 10])
+
+    if (x[5] <= x[6]):
+        return np.nan
+
+    for i in range(7,9):
+        if x[i-1] > x[i]:
+            return np.nan
+    
+    if (x[8] <= x[9]):
+        return np.nan
+
+    petal_length['Pequena'] = skf.trimf(petal_length.universe, [0.5, 0.5, x[5]])
+    petal_length['Media'] = skf.trimf(petal_length.universe, [x[6], x[7], x[8]])
+    petal_length['Grande'] = skf.trimf(petal_length.universe, [x[9], 10, 10])
+    
+    if (x[10] <= x[11]):
+        return np.nan
+    
+    for i in range(12,14):
+        if x[i-1] > x[i]:
+            return np.nan
+    
+    if (x[13] <= x[14]):
+        return np.nan
+    
+    petal_width['Pequena'] = skf.trimf(petal_width.universe, [0.1, 0.1, x[10]])
+    petal_width['Media'] = skf.trimf(petal_width.universe, [x[11], x[12], x[13]])
+    petal_width['Grande'] = skf.trimf(petal_width.universe, [x[14], 5, 5])
+    
+    if (x[15] <= x[16]):
+        return np.nan
+    
+    for i in range(17,19):
+        if x[i-1] > x[i]:
+            return np.nan
+        
+    if (x[18] <= x[19]):
+        return np.nan
+    
+    x[-5:] = np.round(x[-5:])
+    group['G0'] = skf.trimf(group.universe, [0, 0, x[15]])
+    group['G1'] = skf.trimf(group.universe, [x[16], x[17], x[18]])
+    group['G2'] = skf.trimf(group.universe, [x[19], 2, 2])
+    
+    regra_1 = skc.Rule(sepal_length['Media'] & petal_length['Pequena'] &
+                       petal_width['Pequena'], group['G0'])
+
+    regra_2 = skc.Rule(sepal_length['Media'] & petal_length['Media'] &
+                       petal_width['Media'], group['G1'])
+    
+    regra_3 = skc.Rule(sepal_length['Grande'] & petal_length['Grande'] &
+                       petal_width['Grande'], group['G2'])
+    
+    controle = skc.ControlSystem([regra_1, regra_2, regra_3])
+    saida = skc.ControlSystemSimulation(controle)
+    
+    acertos = 0
+    for i in range(len(iris_train)):
+        saida.input['sepal_length'] = iris_train[i][0]
+        saida.input['petal_length'] = iris_train[i][2]
+        saida.input['petal_width'] = iris_train[i][3]
+        saida.compute()
+        
+        if label_train[i] == np.round(saida.output['Group']):
+            acertos += 1
+        
+    return -(acertos/len(iris_train))
+
+
+sep_le = [(0.5, 10) for _ in range(5)]
+pet_le = [(0.5, 10) for _ in range(5)]
+pet_wi = [(0.1, 5) for _ in range(5)]
+g = [(0, 2) for _ in range(5)]
+boundaries = sep_le + pet_le + pet_wi + g
+
+abc_obj = abc(cost_function, boundaries, scouts=0.1, nan_protection=True)
+abc_obj.fit()
+
+# %%
+#Modelo final
+
+sepal_length = skc.Antecedent(np.arange(0.5, 10, 0.1), 'sepal_length')
+petal_length = skc.Antecedent(np.arange(0.5, 10, 0.1), 'petal_length')
+petal_width = skc.Antecedent(np.arange(0.1, 5.0, 0.1), 'petal_width')
+group = skc.Consequent(np.arange(0, 2, 1e-2), 'Group')
+
+niveis = ['Pequena', 'Media', 'Grande']
+sepal_length.automf(names=niveis)
+petal_length.automf(names=niveis)
+petal_width.automf(names=niveis)
+group.automf(names=['G0', 'G1', 'G2'])
+
+sepal_length.view()
+petal_length.view()
+petal_width.view()
+group.view()
+
+regra_1 = skc.Rule(sepal_length['Media'] & petal_length['Pequena'] &
+                       petal_width['Pequena'], group['G0'])
+
+regra_2 = skc.Rule(sepal_length['Media'] & petal_length['Media'] &
+                   petal_width['Media'], group['G1'])
+
+regra_3 = skc.Rule(sepal_length['Grande'] & petal_length['Grande'] &
+                   petal_width['Grande'], group['G2'])
+
+controle = skc.ControlSystem([regra_1, regra_2, regra_3])
+saida = skc.ControlSystemSimulation(controle)
+
+acertos = 0
+for i in range(len(iris_train)):
+    saida.input['sepal_length'] = iris_train[i][0]
+    saida.input['petal_length'] = iris_train[i][2]
+    saida.input['petal_width'] = iris_train[i][3]
+    saida.compute()
+    
+    if label_train[i] == np.round(saida.output['Group']):
+        acertos += 1
+    
+print(-(acertos/len(iris_train)))
