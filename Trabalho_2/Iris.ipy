@@ -11,14 +11,21 @@ from sklearn import model_selection as skms
 from matplotlib import pyplot as plt
 from beecolpy import abc
 
+#Esta função aplica o modelo fuzzy de classificação com funções de pertinência
+#triangulares, com vértices localizados em [model].
 def apply_model(data, label, model, validate=False):
     #Regras
+    #A variável "sepal_width" foi retirada do modelo após efetuado teste de correlação
+    #explicado e executado no segundo bloco do código.
     sepal_length = skc.Antecedent(np.arange(0.5, 10, 0.1), 'sepal_length')
     petal_length = skc.Antecedent(np.arange(0.5, 10, 0.1), 'petal_length')
     petal_width = skc.Antecedent(np.arange(0.1, 5.0, 0.1), 'petal_width')
     group = skc.Consequent(np.arange(0, 2, 1e-2), 'Group')
     
     #Função de aplicação do modelo fuzzy
+    #Os vértices inicial e central das funções de "pequena" e "G0" são fixos em pertinência
+    #máxima no início da escala, enquanto os de funções "grande" e "G2" no final da escala.
+    #Dessa forma a quantidade de graus de liberdade para cada entrada diminuiu de 9 para 5.
     sepal_length['Pequena'] = skf.trimf(sepal_length.universe, [0.5, 0.5, model[0]])    #<
     sepal_length['Media'] = skf.trimf(sepal_length.universe, [model[1], model[2], model[3]])
     sepal_length['Grande'] = skf.trimf(sepal_length.universe, [model[4], 10, 10])
@@ -35,6 +42,10 @@ def apply_model(data, label, model, validate=False):
     group['G1'] = skf.trimf(group.universe, [model[16], model[17], model[18]])
     group['G2'] = skf.trimf(group.universe, [model[19], 2, 2])
     
+    #As regras foram definidas analizando-se uma parte do conjunto de teste
+    #em tabela, onde foram determinados os valores mínimo, médio e máximo de
+    #cada variável de entrada e relacionada a posição (próximo de min = pequena,
+    #próxima da média = media e próxima da máxima = grande) com o grupo de saída.
     regra_1 = skc.Rule(sepal_length['Media'] & petal_length['Pequena'] &
                        petal_width['Pequena'], group['G0'])
     
@@ -44,15 +55,18 @@ def apply_model(data, label, model, validate=False):
     regra_3 = skc.Rule(sepal_length['Grande'] & petal_length['Grande'] &
                        petal_width['Grande'], group['G2'])
     
+    #Montado o modelo
     controle = skc.ControlSystem([regra_1, regra_2, regra_3])
     saida = skc.ControlSystemSimulation(controle)
     
+    #Plota os gráficos no momento da validação
     if validate:
         sepal_length.view()
         petal_length.view()
         petal_width.view()
         group.view()
     
+    #Computa-se o número de acertos do grupo selecionado.
     acertos = 0
     for i in range(len(data)):
         saida.input['sepal_length'] = data[i][0]
@@ -60,9 +74,18 @@ def apply_model(data, label, model, validate=False):
         saida.input['petal_width'] = data[i][3]
         saida.compute()
         
+        #Para definir o grupo, é efetuado um arredondamento da saída do modelo
+        #fuzzy com 0 casas decimais a fim de estabelecer o grupo de pertencimento
+        #entre 0, 1 ou 2.
+        #Dessa forma:
+            #       saida < 0.5  --> Grupo 0
+            # 0.5 < saida < 1.5  --> Grupo 1
+            # 1.5 < saida        --> Grupo 2
         if label[i] == np.round(saida.output['Group']):
             acertos += 1
-        
+    
+    #Retorna-se a proporção entre o número de acertos e o número de
+    #elementos testados.
     return acertos/len(data)
 
 #Carrega o dataset e separa em conjunto de treino e validação
@@ -70,6 +93,9 @@ iris = data.load_iris()
 dataset = np.column_stack((iris.data, iris.target))
 dataset_columns = iris.feature_names + ['Group']
 
+#Definida seed (random_state) para a randomização dos elementos para facilitar
+#a reprodutibilidade, porém, o algoritmo funciona normalmente se este parâmetro
+#for retirado.
 iris_train, iris_validate, label_train, label_validate = skms.train_test_split(
     iris.data, iris.target, test_size=0.5, random_state=1)
 
@@ -96,7 +122,10 @@ def cost_function(x):
     global iris_train, label_train
     
     try:
-        #Verificação da validade dos valores testados
+        #Verificação da validade dos valores testados.
+        #Quando os vértices das funções de pertinência assumem posições
+        #inválidas, o algoritmo para a execução e retorna NaN antes de prosseguir,
+        #diminuindo assim o custo computacional da simulação.
         #sepal_length
         if (x[0] <= x[1]):
             return np.nan
@@ -146,7 +175,12 @@ def cost_function(x):
         return apply_model(iris_train, label_train, x) * (-1)
     
     except:
-        #Sim, as vezes os valores do modelo geram erro no pacote skfuzzy
+        #Sim, as vezes os valores do modelo geram erro no pacote skfuzzy.
+        #Mesmo com os valores aparentemente dentro da faixa válida, algumas vezes
+        #o modelo Fuzzy diverge. Como algoritmos de meta-heurística testam muitos
+        #valores do domínio da função custo, é muito raro deste evento não ocorrer.
+        #Dessa forma a função custo retorna NaN caso ocorra um erro no modelo
+        #fuzzy testado.
         return np.nan
 
 #Limites do espaço de busca
@@ -161,6 +195,11 @@ boundaries = sep_le + pet_le + pet_wi + g
 #de convergência, contudo, qualquer algoritmo de otimização numérica
 #capaz de avaliar sistemas multi-dimensionais com eficiência (nesse caso no R^20)
 #pode ser aplicado aqui.
+#Caso seja utilizado um algoritmo que não esteja preparado para lidar com NaNs, pode-se
+#trocar o valor de retorno da função custo para Inf, contudo, no algoritmo
+#utilizado neste trabalho, a utilização de NaN aumenta a convergência do algoritmo.
+
+#Criação do objeto e das variáveis de armazenamento do histórico.
 abc_obj = abc(cost_function, boundaries, scouts=0.1, iterations=1, nan_protection=True)
 total_iterations = 0 #Histórico do total de iterações executadas
 cost_history = [] #Historico do avanço da função custo
@@ -168,9 +207,9 @@ cost_history = [] #Historico do avanço da função custo
 # %%
 #Executa a otimização
 cost = cost_function(abc_obj.get_solution())
-min_cost = 0.9
+min_cost = 0.9 #valor objetivo a ser atingido no conjuunto de treinamento
 counter_max = 1000000 #Executa até 1.000.000 iterações máximas (para se convergir antes)
-counter = 0
+counter = 0 #valor inicial do contador
 while (np.isnan(cost) or (abs(cost) < min_cost)) and (counter < counter_max):
     abc_obj.fit()
     cost = cost_function(abc_obj.get_solution())
@@ -183,7 +222,8 @@ model = abc_obj.get_solution()
 
 # %%
 #Validação
-#Modelo encontrado pela meta-heuristica (salvo para evitar acidentes)
+#Modelo encontrado pela meta-heuristica (salvo para evitar acidentes, com
+#assertividade acima de 93% no conjunto de validação)
 model = [7.820832190853921, 2.31482724609497, 5.6662017396228395,
           6.671917724767254, 2.0239317860615778, 4.40492983366766,
           2.018972446124932, 6.332068172496837, 8.53634119822423,
