@@ -71,7 +71,7 @@ dataset = np.column_stack((iris.data, iris.target))
 dataset_columns = iris.feature_names + ['Group']
 
 iris_train, iris_validate, label_train, label_validate = skms.train_test_split(
-    iris.data, iris.target, test_size=0.5, random_state=12)
+    iris.data, iris.target, test_size=0.5, random_state=1)
 
 # %%
 #Teste de correlação das características com os grupos
@@ -169,7 +169,7 @@ cost_history = [] #Historico do avanço da função custo
 #Executa a otimização
 cost = cost_function(abc_obj.get_solution())
 min_cost = 0.9
-counter_max = 1000000 #Executa até 1.000.000 iterações
+counter_max = 1000000 #Executa até 1.000.000 iterações máximas (para se convergir antes)
 counter = 0
 while (np.isnan(cost) or (abs(cost) < min_cost)) and (counter < counter_max):
     abc_obj.fit()
@@ -178,24 +178,19 @@ while (np.isnan(cost) or (abs(cost) < min_cost)) and (counter < counter_max):
     total_iterations += abc_obj.get_status()[0]
     counter += 1
 
-plt.figure()
-plt.plot(cost_history, 'r*:', label='Assertividade do treinamento')
-plt.grid(True)
-plt.legend(loc='best')
-
 print('\nAssertividade do treinamento:' + str(cost_function(abc_obj.get_solution())*100) + '%\n')
 model = abc_obj.get_solution()
 
 # %%
 #Validação
 #Modelo encontrado pela meta-heuristica (salvo para evitar acidentes)
-# model = [7.820832190853921, 2.31482724609497, 5.6662017396228395,
-#           6.671917724767254, 2.0239317860615778, 4.40492983366766,
-#           2.018972446124932, 6.332068172496837, 8.53634119822423,
-#           1.9273473221936863, 1.3584252936962893, 0.9409301064887465,
-#           2.054738187216678, 4.806052425602064, 0.10647104158758393,
-#           1.1433952151944697, 1.0483687468076053, 1.6248452828555107,
-#           1.7368569274222652, 0.8436899666614793]
+model = [7.820832190853921, 2.31482724609497, 5.6662017396228395,
+          6.671917724767254, 2.0239317860615778, 4.40492983366766,
+          2.018972446124932, 6.332068172496837, 8.53634119822423,
+          1.9273473221936863, 1.3584252936962893, 0.9409301064887465,
+          2.054738187216678, 4.806052425602064, 0.10647104158758393,
+          1.1433952151944697, 1.0483687468076053, 1.6248452828555107,
+          1.7368569274222652, 0.8436899666614793]
 
 fim = apply_model(iris_validate, label_validate, model, validate=True)
 print('\nAssertividade do algoritmo: ' + str(fim*100) + '%\n')
