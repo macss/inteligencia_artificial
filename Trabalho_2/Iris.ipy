@@ -12,8 +12,14 @@ from matplotlib import pyplot as plt
 from beecolpy import abc
 
 def apply_model(data, label, model, validate=False):
+    #Regras
+    sepal_length = skc.Antecedent(np.arange(0.5, 10, 0.1), 'sepal_length')
+    petal_length = skc.Antecedent(np.arange(0.5, 10, 0.1), 'petal_length')
+    petal_width = skc.Antecedent(np.arange(0.1, 5.0, 0.1), 'petal_width')
+    group = skc.Consequent(np.arange(0, 2, 1e-2), 'Group')
+    
     #Função de aplicação do modelo fuzzy
-    sepal_length['Pequena'] = skf.trimf(sepal_length.universe, [0.5, 0.5, model[0]])   #<
+    sepal_length['Pequena'] = skf.trimf(sepal_length.universe, [0.5, 0.5, model[0]])    #<
     sepal_length['Media'] = skf.trimf(sepal_length.universe, [model[1], model[2], model[3]])
     sepal_length['Grande'] = skf.trimf(sepal_length.universe, [model[4], 10, 10])
     
@@ -25,7 +31,7 @@ def apply_model(data, label, model, validate=False):
     petal_width['Media'] = skf.trimf(petal_width.universe, [model[11], model[12], model[13]])
     petal_width['Grande'] = skf.trimf(petal_width.universe, [model[14], 5, 5])
     
-    model[-5:] = np.round(model[-5:])
+    # model[-5:] = np.round(model[-5:])
     group['G0'] = skf.trimf(group.universe, [0, 0, model[15]])
     group['G1'] = skf.trimf(group.universe, [model[16], model[17], model[18]])
     group['G2'] = skf.trimf(group.universe, [model[19], 2, 2])
@@ -75,22 +81,19 @@ for i in range(len(iris_train[0])):
     temp_cov = np.cov(iris_train[:,i], label_train)[0,1]/ \
                         (np.std(iris_train[:,i]) * np.std(label_train))
     covariance.append(temp_cov)
-print('\n',pd.DataFrame([covariance], columns=iris.feature_names),'\n')
+print('\nCovariância normalizada de cada parâmetro com a classificação:\n',
+      pd.DataFrame([covariance], columns=iris.feature_names),'\n')
 
 #A correlação da "sepal width" é inversamente proporcional à classificação e seu
-#valor é consideravelmente baixo (<0.4), sendo assim, esta variável será suprimida
+#valor é consideravelmente baixo (abs<0.5), sendo assim, esta variável será suprimida
 #para reduzir os graus de liberdade necessários para o algoritmo de otimização
 #resolver.
 
 #As demais características são relevantes pois possuem covariância normalizada
-#próximas de 1.
+#muito próximas de 1.
 
 # %%
 #Regras de fuzificação
-sepal_length = skc.Antecedent(np.arange(0.5, 10, 0.1), 'sepal_length')
-petal_length = skc.Antecedent(np.arange(0.5, 10, 0.1), 'petal_length')
-petal_width = skc.Antecedent(np.arange(0.1, 5.0, 0.1), 'petal_width')
-group = skc.Consequent(np.arange(0, 2, 1e-2), 'Group')
 
 
 def cost_function(x):
@@ -162,7 +165,7 @@ boundaries = sep_le + pet_le + pet_wi + g
 #de convergência, contudo, qualquer algoritmo de otimização numérica
 #capaz de avaliar sistemas multi-dimensionais com eficiência (nesse caso no R^20)
 #pode ser aplicado aqui.
-abc_obj = abc(cost_function, boundaries, scouts=0.1, iterations=10)
+abc_obj = abc(cost_function, boundaries, scouts=0.1, iterations=10, nan_protection=True)
 
 # %%
 #Executa a otimização
@@ -175,17 +178,18 @@ while (np.isnan(cost) or (abs(cost) < min_cost)) and (counter < counter_max):
     cost = cost_function(abc_obj.get_solution())
     counter += 1
 
-print(cost_function(abc_obj.get_solution()))
+# print(cost_function(abc_obj.get_solution()))
+model = abc_obj.get_solution()
 
 # %%
 #Validação
-#Modelo encontrado pela meta-heuristica
-model = [4.379816405224643, 2.808541403010832, 3.512531456147736,
-              6.9491637560712505, 4.6258155335414575, 6.09869852901734,
-              2.7702684342969603, 3.7003991744486417, 4.437759007961306,
-              1.996822633361002, 1.5957220861196284, 1.016947728081905,
-              1.7728517128873171, 3.821965946080636, 0.2684981926962442,
-              1.0, 0.0, 1.0, 2.0, 1.0]
+#Modelo encontrado pela meta-heuristica (salvo para evitar acidentes)
+# model = [8.345187074597666, 1.344303461214412, 5.772644546836534,
+#           8.327221087690711, 4.823313710468496, 5.023972664386115,
+#           4.948725543030505, 8.120791526149304, 8.577518935191227,
+#           2.733682493661978, 4.451887627351388, 2.70708458002275,
+#           2.7815955876291185, 4.801835368133662, 0.3326726142273378,
+#           1.0, 0.0, 2.0, 2.0, 1.0]
 
 fim = apply_model(iris_validate, label_validate, model, validate=True)
-print('Acertividade do algoritmo: ' + str(fim*100) + '%')
+print('\nAssertividade do algoritmo: ' + str(fim*100) + '%')
