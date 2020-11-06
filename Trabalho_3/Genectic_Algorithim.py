@@ -42,10 +42,12 @@ def f(X): #F(Kp, Ki, Kd)
     
     erro = [TARGET_VALUE-resp for resp in resposta]
     
-    #Cálculo da integral de erro quadratico
-    ise = (2*erro[-1])/3 - (2*erro[0]/3)
-        
-    return ise
+    #Cálculo da integral de erro quadratico multiplicado pelo tempo
+    # print(tempo)
+    # print(erro)
+    itse = np.sum(tempo*np.power(erro,2))
+
+    return itse
 
 
 varbound=np.array([[0,10]]*3)
