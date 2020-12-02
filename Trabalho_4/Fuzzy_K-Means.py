@@ -18,7 +18,7 @@ dataset = data.load_iris()
 # %%
 #Define os parâmetros para o treinamento e teste
 test_size = 0.5
-ncenters = 5
+ncenters = 3
 n_testes = 1000
 m_base = [1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 6.0, 8.0, 10]
 

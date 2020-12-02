@@ -13,7 +13,7 @@ from sklearn.neural_network import MLPClassifier
 from geneticalgorithm import geneticalgorithm as ga
 from tqdm import tqdm
 
-#Valores: True : Aplica otimização com algoritmo genético.
+#Valores: True : Aplica otimização com algoritmo genético. (demora bastante!)
 #         False : Aplica modelo já obtido anteriormente.
 otimizar = False
 
@@ -84,7 +84,7 @@ if otimizar:
 
 else:
     #Obtidos com GA (iterações: 36 (max: None), população: 100)
-    neuronios = (2,)
+    neuronios = (4,)
     funcao_ativacao = 'identity'
 
 

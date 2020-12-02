@@ -18,8 +18,8 @@ dataset = data.load_iris()
 # %%
 #Define os parâmetros para o treinamento e teste
 test_size = 0.5
-ncenters = 5
-n_testes = 10
+ncenters = 3
+n_testes = 1000
 f1_list = []
 
 for _ in tqdm(range(n_testes)):

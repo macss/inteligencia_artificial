@@ -223,9 +223,7 @@ if aplicar_otimização:
     print('\nAssertividade do treinamento:' + str(cost_function(abc_obj.get_solution())*100) + '%\n')
     model = abc_obj.get_solution()
 
-# %%
-#Validação
-if not(aplicar_otimização):
+else:
     #Modelo encontrado pela meta-heuristica (salvo para evitar acidentes, com
     #assertividade acima de 93% no conjunto de validação)
     model = [7.820832190853921, 2.31482724609497, 5.6662017396228395,
@@ -236,7 +234,8 @@ if not(aplicar_otimização):
               1.1433952151944697, 1.0483687468076053, 1.6248452828555107,
               1.7368569274222652, 0.8436899666614793]
 
-
+# %%
+#Validação
 f1 = apply_model(iris_validate, label_validate, model, plot_model=True)
 time.sleep(1)
 
