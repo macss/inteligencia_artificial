@@ -6,7 +6,6 @@ Created on Sat Sep 19 19:47:14 2020
 """
 
 # %%
-import pandas as pd
 import sklearn.cluster as skc
 from sklearn import datasets as data
 from sklearn.model_selection import train_test_split
@@ -15,12 +14,6 @@ from sklearn.metrics import f1_score
 from tqdm import tqdm
 
 dataset = data.load_iris()
-
-# %%
-
-# dataset_show = pd.DataFrame(np.column_stack((dataset.data, dataset.target)),
-#                    columns = dataset.feature_names + ['Target'])
-# print(dataset_show)
 
 # %%
 #Define os parâmetros para o treinamento e teste

@@ -10,13 +10,12 @@ from sklearn import datasets as data
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from sklearn.neural_network import MLPClassifier
-from beecolpy import bin_abc
 from geneticalgorithm import geneticalgorithm as ga
 from tqdm import tqdm
 
-#Valores: 'ga' ou 'abc': aplica otimização com o método desejado (GA é demorado!)
-#         Qualquer outro valor: Aplica modelo já obtido anteriormente.
-otimizar = 'abc'
+#Valores: True : Aplica otimização com algoritmo genético.
+#         False : Aplica modelo já obtido anteriormente.
+otimizar = False
 
 dataset = data.load_iris()
 
@@ -73,41 +72,19 @@ def cost_function(x):
 
 # %%
 #Aplica o algoritmo de otimização
-if (otimizar in ['ga', 'abc']):
-    if (otimizar == 'ga'):
-        ga_obj = ga(function = cost_function,
-                    dimension = 6,
-                    variable_type = 'bool')
-    
-        ga_obj.run()
-    
-        neuronios = translate_hl_size(ga_obj.best_variable[:-2])
-        funcao_ativacao = translate_activation_function(ga_obj.best_variable[-2:])
+if otimizar:
+    ga_obj = ga(function = cost_function,
+                dimension = 6,
+                variable_type = 'bool')
 
-    elif (otimizar == 'abc'):
-        n_iter = 100
-        
-        abc_obj = bin_abc(function = cost_function,
-                          bits_count = 6,
-                          colony_size = 20,
-                          scouts = 0.1,
-                          iterations = 1)
-        
-        for _ in tqdm(range(n_iter)):
-            abc_obj.fit()
-            
-        neuronios = translate_hl_size(abc_obj.get_solution()[:-2])
-        funcao_ativacao = translate_activation_function(abc_obj.get_solution()[-2:])
-    
+    ga_obj.run()
+
+    neuronios = translate_hl_size(ga_obj.best_variable[:-2])
+    funcao_ativacao = translate_activation_function(ga_obj.best_variable[-2:])
+
 else:
-    #Melhor modelo encontrado
-    
-    #Obtidos com ABC (iterações: 10, scouts: 0.1, tamanho de colônia: 20)
-    # neuronios = (2,)
-    # funcao_ativacao = 'relu'
-    
     #Obtidos com GA (iterações: 36 (max: None), população: 100)
-    neuronios = (1,)
+    neuronios = (2,)
     funcao_ativacao = 'identity'
 
 
