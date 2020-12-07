@@ -74,7 +74,7 @@ y_val = load[::decimacao, 2]
 
 # Mesmo não sendo uma forma definitiva de definir o atraso real do modelo, 
 # pode-se utilizar a correlação cruzada entre a entrada (u) e a saída (y) 
-# para definir qual o atraso máximo do modelo.
+# para estimar o atraso máximo do modelo.
 
 ruy, tuy, _, _ = correlation(u[:20], y[:20])
 
@@ -265,23 +265,29 @@ def cost_function(code):
 # processo ter terminado, me obrigando a repetir tudo.
 
 # ATENÇÃO:
-# Descomentar e executar esse bloco do código leva entre 4 e 8 horas!
+# Descomentar e executar esse bloco do código leva muito tempo!
+# (nos parâmetros iniciais levava cerca de 4 horas, nos parãmetros atuais,
+# leva cerca de 1:30 horas)
 # Aqui é recomendado executar o código no terminal e não na IDE
 # (Spyder, VSCode, etc)
 
 # import joblib as job
-# from beecolpy import amabc
-# import tqdm
+# from beecolpy import bin_abc
+# from tqdm import tqdm
+# import time
 
-# print('Carregando população inicial do ABC.')
-# abc_obj = amabc(cost_function, bits_count=bits, scouts=0.1, iterations=1)
+# print('Carregando população inicial do ABC.\n')
+# abc_obj = bin_abc(cost_function,
+#                   bits_count=bits,
+#                   scouts=0.1,
+#                   iterations=1)
 
 # for i in tqdm(range(iteration_max)):
 #     abc_obj.fit()
-
-# print('\nSalvando objeto.')
-# with open('abc_neural.joblib', 'wb') as file:
-#     job.dump(abc_obj, file)
+#     time.sleep(1)
+#     with open('abc_neural.joblib', 'wb') as file:
+#         job.dump(abc_obj, file)
+#     time.sleep(1)
     
 # print('\nFinalizado.')
 
@@ -297,7 +303,7 @@ def cost_function(code):
 # Estre trecho do código depende do arquivo gerado durante a otimização.
 
 # import joblib as job
-# from beecolpy import amabc
+# from beecolpy import bin_abc
 # with open('abc_neural.joblib', 'rb') as file:
 #     abc_obj = job.load(file)
 
@@ -328,6 +334,7 @@ def cost_function(code):
 # arquivo gerado durante a otimização. Aqui pode-se colocar a função de
 # ativação e o número de neurônios da camada oculta manualmente.
 # Modelo obtido na otimização: (6,) 'tanh'
+
 ann_obj = train_network(u, y, atraso, (6,), 'tanh')
 y_sim = np.empty(atraso)
 y_sim.fill(np.nan)
