@@ -8,11 +8,21 @@ from sklearn.neural_network import MLPRegressor
 import matplotlib.pyplot as plt
 from covariance import correlation
 
+# Altera os parâmetros de geração de gráficos para o padrão de publicação.
+publicar_graficos = False
+
 # Carrega os dados.
 # Inicialmente estes dados são referentes à parcela de treinamento e teste.
 load = np.loadtxt('buck_id.dat')
 u = load[:, 1]
 y = load[:, 2]
+
+if publicar_graficos:
+    plt.rc('font', size=42)
+    plt.rc('lines', linewidth=8, markersize=15)
+else: #Default
+    plt.rc('font', size=10)
+    plt.rc('lines', linewidth=1.5, markersize=6)
 
 # %%
 # Determinando a decimação
@@ -42,16 +52,16 @@ ty_min = np.where(np.diff(ry)>=0)[0][0]
 ty2_min = np.where(np.diff(ry)>=0)[0][0]
 
 plt.figure()
-plt.plot(ty, ry, label='$r_{yy}$')
-plt.scatter(ty[ty_min], ry[ty_min], color='red')
+plt.plot(ty, ry, label='$r_{yy}$', zorder=2)
+plt.scatter(ty[ty_min], ry[ty_min], color='red', zorder=3)
 plt.legend()
-plt.grid(True)
+plt.grid(True, zorder=0)
 
 plt.figure()
-plt.plot(ty2, ry2, label='$r_{{y^2}{y^2}}$')
-plt.scatter(ty2[ty2_min], ry2[ty2_min], color='red')
+plt.plot(ty2, ry2, label='$r_{{y^2}{y^2}}$', zorder=2)
+plt.scatter(ty2[ty2_min], ry2[ty2_min], color='red', zorder=3)
 plt.legend()
-plt.grid(True)
+plt.grid(True, zorder=1)
 
 tau_y = ty[ty_min] / 20
 tau_y2 = ty2[ty2_min] / 20
@@ -87,15 +97,13 @@ ruy, tuy, _, _ = correlation(u[:20], y[:20])
 t_max = np.argmax(ruy)
 t_min = np.argmin(ruy)
 plt.figure()
-plt.plot(tuy, ruy, label='$r_{uy}$')
-plt.scatter(tuy[[t_min, t_max]], ruy[[t_min, t_max]], color='red')
+plt.plot(tuy, ruy, label='$r_{uy}$', zorder=2)
+plt.scatter(tuy[[t_min, t_max]], ruy[[t_min, t_max]], color='red', zorder=3)
 plt.legend()
-plt.grid(True)
+plt.grid(True, zorder=1)
 
-# Para manter o modelo o mais simples possível, inicialmente adota-se o menor
-# atraso obtido aqui (t=2), mas pode-se utilizar outros valores, ao custo de
-# tornar o modelo mais computacionalmente custoso.
-atraso = 2
+# Atraso máximo do modelo estimado pela análise de correlação cruzada.
+atraso = 3
 
 # %%
 # Preparação para aplicar o algoritmo de otimização, determinando as funções
@@ -321,10 +329,10 @@ def cost_function(code):
 # print('{:.8f}'.format(rrse(y_val[atraso:], y_sim[atraso:])))
 
 # plt.figure()
-# plt.plot(y_val, 'b-', label='Dados')
-# plt.plot(y_sim, 'r:', label='Modelo')
+# plt.plot(y_val, 'b-', label='Dados', zorder=2)
+# plt.plot(y_sim, 'r:', label='Modelo', zorder=3)
 # plt.legend()
-# plt.grid(True)
+# plt.grid(True, zorder=1)
 
 
 # %%
@@ -343,7 +351,7 @@ y_sim = np.append(y_sim, predict_network(u_val, y_val, atraso, ann_obj))
 print('RRSE do modelo: {:.8f}'.format(rrse(y_val[atraso:], y_sim[atraso:])))
 
 plt.figure()
-plt.plot(y_val, 'b-', label='Dados')
-plt.plot(y_sim, 'r:', label='Modelo')
+plt.plot(y_val, 'b-', label='Dados', zorder=2)
+plt.plot(y_sim, 'r:', label='Modelo', zorder=3)
 plt.legend()
-plt.grid(True)
+plt.grid(True, zorder=1)
