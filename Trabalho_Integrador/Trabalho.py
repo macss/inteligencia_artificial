@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from covariance import correlation
 
 # Altera os parâmetros de geração de gráficos para o padrão de publicação.
-publicar_graficos = False
+publicar_graficos = True
 
 # Carrega os dados.
 # Inicialmente estes dados são referentes à parcela de treinamento e teste.
@@ -52,13 +52,13 @@ ty_min = np.where(np.diff(ry)>=0)[0][0]
 ty2_min = np.where(np.diff(ry)>=0)[0][0]
 
 plt.figure()
-plt.plot(ty, ry, label='$r_{yy}$', zorder=2)
+plt.plot(ty, ry, 'b-', label='$r_{yy}$', zorder=2)
 plt.scatter(ty[ty_min], ry[ty_min], color='red', zorder=3)
 plt.legend()
 plt.grid(True, zorder=0)
 
 plt.figure()
-plt.plot(ty2, ry2, label='$r_{{y^2}{y^2}}$', zorder=2)
+plt.plot(ty2, ry2, 'b-', label='$r_{{y^2}{y^2}}$', zorder=2)
 plt.scatter(ty2[ty2_min], ry2[ty2_min], color='red', zorder=3)
 plt.legend()
 plt.grid(True, zorder=1)
@@ -97,8 +97,9 @@ ruy, tuy, _, _ = correlation(u[:20], y[:20])
 t_max = np.argmax(ruy)
 t_min = np.argmin(ruy)
 plt.figure()
-plt.plot(tuy, ruy, label='$r_{uy}$', zorder=2)
-plt.scatter(tuy[[t_min, t_max]], ruy[[t_min, t_max]], color='red', zorder=3)
+plt.plot(tuy, ruy, 'b-', label='$r_{uy}$', zorder=2)
+plt.scatter(tuy[[t_min, t_max]], ruy[[t_min, t_max]],
+            color='red', zorder=3)
 plt.legend()
 plt.grid(True, zorder=1)
 
@@ -158,8 +159,11 @@ def train_network(u, y, lag, hidden_layer_sizes, activation):
         input_id.append(y[k_i:k_o])
     input_id = np.array(input_id).T
 
-    neural = MLPRegressor(hidden_layer_sizes=hidden_layer_sizes, alpha=1e-1, \
-                          max_iter=5000, activation=activation, solver='lbfgs')
+    neural = MLPRegressor(hidden_layer_sizes=hidden_layer_sizes,
+                          alpha=1e-1,
+                          max_iter=5000,
+                          activation=activation,
+                          solver='lbfgs')
     neural.fit(input_id,y[lag:])
 
     return neural
@@ -250,7 +254,10 @@ def cost_function(code):
             y_sim_test = predict_network(u_test, y_test, atraso, ann_obj)
             
             fit_metric = rrse(y_test[atraso:], y_sim_test)
-            fit_metric = fit_metric if (fit_metric >= 1) else 2*np.power(fit_metric,4)
+            
+            fit_metric = fit_metric if (fit_metric >= 1) \
+                                    else 2*np.power(fit_metric,4)
+                                    
             fit_metric_list.append(fit_metric)
         
         cost += 0.5*np.max(fit_metric_list)
@@ -355,3 +362,28 @@ plt.plot(y_val, 'b-', label='Dados', zorder=2)
 plt.plot(y_sim, 'r:', label='Modelo', zorder=3)
 plt.legend()
 plt.grid(True, zorder=1)
+
+
+# %%
+# Análise de resíduos
+residue = y_sim[atraso:] - y_val[atraso:]
+
+rue, tue, rue_sup, rue_inf = correlation(u_val[atraso:21+atraso],
+                                         residue[:21])
+
+ree, tee, ree_sup, ree_inf = correlation(residue[:21])
+
+plt.figure()
+plt.plot(tue, rue, 'b-', label='$r_{ue}$', zorder=2)
+plt.hlines([rue_inf, rue_sup], tue[0], tue[-1],
+           color='black', linestyles=':', zorder=3)
+plt.legend()
+plt.grid(True, zorder=1)
+
+plt.figure()
+plt.plot(tee, ree, 'b-', label='$r_{ee}$', zorder=2)
+plt.hlines([ree_inf, ree_sup], tee[0], tee[-1],
+           color='black', linestyles=':', zorder=3)
+plt.legend()
+plt.grid(True, zorder=1)
+
