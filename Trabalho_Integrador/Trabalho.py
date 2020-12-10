@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from covariance import correlation
 
 # Altera os parâmetros de geração de gráficos para o padrão de publicação.
-publicar_graficos = True
+publicar_graficos = False
 
 # Carrega os dados.
 # Inicialmente estes dados são referentes à parcela de treinamento e teste.
@@ -23,6 +23,7 @@ if publicar_graficos:
 else: #Default
     plt.rc('font', size=10)
     plt.rc('lines', linewidth=1.5, markersize=6)
+
 
 # %%
 # Determinando a decimação
@@ -79,6 +80,7 @@ load = np.loadtxt('buck_val.dat')
 u_val = load[::decimacao, 1]
 y_val = load[::decimacao, 2]
 
+
 # %%
 # Análise de variância
 
@@ -105,6 +107,7 @@ plt.grid(True, zorder=1)
 
 # Atraso máximo do modelo estimado pela análise de correlação cruzada.
 atraso = 3
+
 
 # %%
 # Preparação para aplicar o algoritmo de otimização, determinando as funções
@@ -254,6 +257,9 @@ def cost_function(code):
             y_sim_test = predict_network(u_test, y_test, atraso, ann_obj)
             
             fit_metric = rrse(y_test[atraso:], y_sim_test)
+            
+            if (fit_metric <= 1e-15):
+                raise Exception()
             
             fit_metric = fit_metric if (fit_metric >= 1) \
                                     else 2*np.power(fit_metric,4)
